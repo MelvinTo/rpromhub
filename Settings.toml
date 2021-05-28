@@ -1,0 +1,12 @@
+
+addr = "127.0.0.1:9998"
+
+[[repo]]
+owner = "firewalla"
+repo = "firewalla"
+branch = ["beta_6_0", "release_6_0", "beta_7_0", "release_7_0", "release_8_0", "beta_8_0", "beta_9_0"]
+
+[[repo]]
+owner = "firewalla"
+repo = "firerouter"
+branch = ["beta_6_0", "release_6_0", "beta_7_0"]
