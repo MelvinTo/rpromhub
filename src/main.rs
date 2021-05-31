@@ -15,15 +15,28 @@ use std::collections::HashMap;
 use chrono::DateTime;
 use chrono::prelude::*;
 
+use std::path::Path;
+use std::path::PathBuf;
+use structopt::StructOpt;
+use std::fs::File;
+use config::*;
+
 const USER_AGENT : &str = "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0 Mobile/15E148 Safari/604.1";
 
 use lazy_static::lazy_static;
 
 use serde::Deserialize;
 
+#[derive(Debug, StructOpt)]
+#[structopt(name = "rpromhub", about = "prometheus hub written in rust")]
+struct Opt {
+    #[structopt(parse(from_os_str))]
+    input: PathBuf
+}
+
 lazy_static! {
     static ref GITHUB_BRANCH_AGE_GAUGE: GaugeVec = register_gauge_vec!(
-        "github_repo_branch_age_seconds",
+        "github_repo_branch_age_days",
         "how long has the branch not been updated",
         &["owner", "repo", "branch"]
     )
@@ -33,8 +46,8 @@ lazy_static! {
         let mut settings= config::Config::default();
         
         settings
-            .merge(config::File::with_name("Settings")).unwrap();
-
+            .merge(config::File::with_name("/etc/rpromhub/Settings")).unwrap();
+        
         let c = settings.try_into::<PromHubConfig>().unwrap();
 
         c
@@ -92,13 +105,13 @@ async fn update_branch_age(owner: &str, repo: &str, branch: &str) -> Result<i64,
 
     let diff = now - utc_date;
 
-    let num_hours = diff.num_hours();
+    let num_days = diff.num_days();
 
     GITHUB_BRANCH_AGE_GAUGE
         .with_label_values(&[owner, repo, branch])
-        .set(num_hours as f64);
+        .set(num_days as f64);
 
-    Ok(diff.num_hours())
+    Ok(diff.num_days())
 }
 
 async fn job() -> Result<i32, Box<dyn std::error::Error>> {
